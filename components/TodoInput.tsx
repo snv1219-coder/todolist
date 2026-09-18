@@ -1,20 +1,42 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createTodoAction } from "@/app/actions";
+import type { Priority } from "@/lib/types";
 
-export default function TodoInput() {
+export default function TodoInput({
+  onAdd,
+}: {
+  onAdd: (data: {
+    title: string;
+    priority: Priority;
+    dueDate: string | null;
+    category: string | null;
+  }) => void;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [expanded, setExpanded] = useState(false);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const title = String(formData.get("title") ?? "").trim();
+    if (!title) return;
+
+    onAdd({
+      title,
+      priority: (formData.get("priority") as Priority) || "MEDIUM",
+      dueDate: String(formData.get("dueDate") ?? "") || null,
+      category: String(formData.get("category") ?? "").trim() || null,
+    });
+
+    formRef.current?.reset();
+    setExpanded(false);
+  }
 
   return (
     <form
       ref={formRef}
-      action={async (formData) => {
-        await createTodoAction(formData);
-        formRef.current?.reset();
-        setExpanded(false);
-      }}
+      onSubmit={handleSubmit}
       className="flex flex-col gap-2 rounded-lg border border-black/10 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-900"
     >
       <div className="flex gap-2">

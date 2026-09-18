@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import type { Todo, Priority } from "@/generated/prisma/client";
-import {
-  toggleTodoAction,
-  deleteTodoAction,
-  updateTodoAction,
-  moveTodoAction,
-} from "@/app/actions";
+import { useState } from "react";
+import type { Priority, Todo } from "@/lib/types";
 
 const PRIORITY_STYLE: Record<Priority, string> = {
   HIGH: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
@@ -21,26 +15,35 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   LOW: "낮음",
 };
 
-function formatDueDate(date: Date) {
-  return new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric" }).format(date);
+function formatDueDate(iso: string) {
+  return new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric" }).format(
+    new Date(iso),
+  );
 }
 
 export default function TodoItem({
   todo,
   isFirst,
   isLast,
+  onToggle,
+  onUpdate,
+  onDelete,
+  onMove,
 }: {
   todo: Todo;
   isFirst: boolean;
   isLast: boolean;
+  onToggle: (id: string) => void;
+  onUpdate: (id: string, data: Partial<Omit<Todo, "id">>) => void;
+  onDelete: (id: string) => void;
+  onMove: (id: string, direction: "up" | "down") => void;
 }) {
-  const [isPending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState(todo.title);
 
-  const dueDate = todo.dueDate ? new Date(todo.dueDate) : null;
-  const isOverdue = dueDate && !todo.completed && dueDate < new Date(new Date().toDateString());
+  const isOverdue =
+    todo.dueDate && !todo.completed && todo.dueDate < new Date().toISOString().slice(0, 10);
 
   function saveTitle() {
     setEditing(false);
@@ -49,20 +52,16 @@ export default function TodoItem({
       setTitle(todo.title);
       return;
     }
-    startTransition(() => updateTodoAction(todo.id, { title: trimmed }));
+    onUpdate(todo.id, { title: trimmed });
   }
 
   return (
-    <li
-      className={`rounded-lg border border-black/10 bg-white p-3 shadow-sm transition-opacity dark:border-white/10 dark:bg-zinc-900 ${
-        isPending ? "opacity-60" : ""
-      }`}
-    >
+    <li className="rounded-lg border border-black/10 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-900">
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
           checked={todo.completed}
-          onChange={() => startTransition(() => toggleTodoAction(todo.id))}
+          onChange={() => onToggle(todo.id)}
           className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
         />
 
@@ -98,7 +97,7 @@ export default function TodoItem({
             <span className={`rounded px-1.5 py-0.5 text-xs ${PRIORITY_STYLE[todo.priority]}`}>
               {PRIORITY_LABEL[todo.priority]}
             </span>
-            {dueDate && (
+            {todo.dueDate && (
               <span
                 className={`rounded px-1.5 py-0.5 text-xs ${
                   isOverdue
@@ -106,7 +105,7 @@ export default function TodoItem({
                     : "bg-zinc-100 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-300"
                 }`}
               >
-                {formatDueDate(dueDate)}
+                {formatDueDate(todo.dueDate)}
               </span>
             )}
             {todo.category && (
@@ -121,22 +120,14 @@ export default function TodoItem({
               <textarea
                 defaultValue={todo.description ?? ""}
                 placeholder="설명 추가"
-                onBlur={(e) =>
-                  startTransition(() =>
-                    updateTodoAction(todo.id, { description: e.target.value || null }),
-                  )
-                }
+                onBlur={(e) => onUpdate(todo.id, { description: e.target.value || null })}
                 className="w-full rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-800"
                 rows={2}
               />
               <div className="flex flex-wrap gap-2">
                 <select
                   defaultValue={todo.priority}
-                  onChange={(e) =>
-                    startTransition(() =>
-                      updateTodoAction(todo.id, { priority: e.target.value as Priority }),
-                    )
-                  }
+                  onChange={(e) => onUpdate(todo.id, { priority: e.target.value as Priority })}
                   className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
                 >
                   <option value="LOW">낮음</option>
@@ -145,25 +136,15 @@ export default function TodoItem({
                 </select>
                 <input
                   type="date"
-                  defaultValue={dueDate ? dueDate.toISOString().slice(0, 10) : ""}
-                  onChange={(e) =>
-                    startTransition(() =>
-                      updateTodoAction(todo.id, {
-                        dueDate: e.target.value ? new Date(e.target.value) : null,
-                      }),
-                    )
-                  }
+                  defaultValue={todo.dueDate ?? ""}
+                  onChange={(e) => onUpdate(todo.id, { dueDate: e.target.value || null })}
                   className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
                 />
                 <input
                   type="text"
                   defaultValue={todo.category ?? ""}
                   placeholder="카테고리"
-                  onBlur={(e) =>
-                    startTransition(() =>
-                      updateTodoAction(todo.id, { category: e.target.value || null }),
-                    )
-                  }
+                  onBlur={(e) => onUpdate(todo.id, { category: e.target.value || null })}
                   className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
                 />
               </div>
@@ -174,7 +155,7 @@ export default function TodoItem({
         <div className="flex shrink-0 flex-col items-end gap-1">
           <div className="flex gap-0.5">
             <button
-              onClick={() => startTransition(() => moveTodoAction(todo.id, "up"))}
+              onClick={() => onMove(todo.id, "up")}
               disabled={isFirst}
               className="rounded px-1 text-zinc-400 hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
               aria-label="위로 이동"
@@ -182,7 +163,7 @@ export default function TodoItem({
               ↑
             </button>
             <button
-              onClick={() => startTransition(() => moveTodoAction(todo.id, "down"))}
+              onClick={() => onMove(todo.id, "down")}
               disabled={isLast}
               className="rounded px-1 text-zinc-400 hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
               aria-label="아래로 이동"
@@ -199,9 +180,7 @@ export default function TodoItem({
             </button>
             <button
               onClick={() => {
-                if (confirm("이 할 일을 삭제할까요?")) {
-                  startTransition(() => deleteTodoAction(todo.id));
-                }
+                if (confirm("이 할 일을 삭제할까요?")) onDelete(todo.id);
               }}
               className="text-xs text-red-400 hover:text-red-600"
             >

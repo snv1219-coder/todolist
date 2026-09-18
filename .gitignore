@@ -40,10 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/generated/prisma
-
-# prisma sqlite db
 /dev.db
-/dev.db-journal
-/prisma/dev.db
-/prisma/dev.db-journal
+
+# claude code local state
+/.claude
