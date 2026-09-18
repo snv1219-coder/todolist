@@ -1,5 +1,6 @@
 import type { Todo } from "@/lib/types";
 import TodoItem from "@/components/TodoItem";
+import { ClipboardIcon } from "@/components/icons";
 
 export default function TodoList({
   todos,
@@ -16,9 +17,12 @@ export default function TodoList({
 }) {
   if (todos.length === 0) {
     return (
-      <p className="py-12 text-center text-sm text-zinc-400">
-        할 일이 없습니다. 위에서 새로 추가해보세요.
-      </p>
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <ClipboardIcon className="h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          할 일이 없습니다. 위에서 새로 추가해보세요.
+        </p>
+      </div>
     );
   }
 

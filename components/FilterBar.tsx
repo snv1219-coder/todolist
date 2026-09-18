@@ -11,6 +11,9 @@ const STATUS_TABS: { value: Status; label: string }[] = [
   { value: "completed", label: "완료" },
 ];
 
+const selectClass =
+  "rounded-lg border bg-transparent px-2.5 py-1.5 text-sm text-zinc-600 outline-none transition-colors focus:border-[var(--accent)] dark:text-zinc-300";
+
 export default function FilterBar({
   status,
   category,
@@ -34,16 +37,17 @@ export default function FilterBar({
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex gap-1 rounded-md bg-black/5 p-1 dark:bg-white/10">
+      <div className="inline-flex gap-1 self-start rounded-xl bg-black/[0.04] p-1 dark:bg-white/[0.06]">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
             onClick={() => onStatusChange(tab.value)}
-            className={`rounded px-3 py-1 text-sm transition-colors ${
+            className="relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+            style={
               status === tab.value
-                ? "bg-white shadow-sm dark:bg-zinc-800"
-                : "text-zinc-600 dark:text-zinc-400"
-            }`}
+                ? { background: "var(--background-elevated)", color: "var(--foreground)" }
+                : { color: "var(--muted)" }
+            }
           >
             {tab.label}
           </button>
@@ -54,7 +58,8 @@ export default function FilterBar({
         <select
           value={priority}
           onChange={(e) => onPriorityChange(e.target.value as Priority | "")}
-          className="rounded-md border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-800"
+          className={selectClass}
+          style={{ borderColor: "var(--border)" }}
         >
           <option value="">모든 우선순위</option>
           <option value="HIGH">높음</option>
@@ -66,7 +71,8 @@ export default function FilterBar({
           <select
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="rounded-md border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-800"
+            className={selectClass}
+            style={{ borderColor: "var(--border)" }}
           >
             <option value="">모든 카테고리</option>
             {categories.map((c) => (
@@ -80,7 +86,8 @@ export default function FilterBar({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as Sort)}
-          className="rounded-md border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-800"
+          className={selectClass}
+          style={{ borderColor: "var(--border)" }}
         >
           <option value="manual">수동 순서</option>
           <option value="dueDate">마감일순</option>

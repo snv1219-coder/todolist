@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import type { Priority, Todo } from "@/lib/types";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, TrashIcon } from "@/components/icons";
 
-const PRIORITY_STYLE: Record<Priority, string> = {
-  HIGH: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
-  MEDIUM: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
-  LOW: "bg-zinc-100 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-300",
+const PRIORITY_COLOR: Record<Priority, string> = {
+  HIGH: "#f43f5e",
+  MEDIUM: "#f59e0b",
+  LOW: "#a1a1aa",
 };
 
 const PRIORITY_LABEL: Record<Priority, string> = {
@@ -56,137 +57,164 @@ export default function TodoItem({
   }
 
   return (
-    <li className="rounded-lg border border-black/10 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-900">
-      <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={() => onToggle(todo.id)}
-          className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
-        />
+    <li
+      className="group flex gap-3 rounded-xl border p-3 pl-3.5 shadow-sm transition-all hover:shadow-md"
+      style={{
+        borderColor: "var(--border)",
+        background: "var(--background-elevated)",
+        borderLeft: `3px solid ${PRIORITY_COLOR[todo.priority]}`,
+      }}
+    >
+      <button
+        onClick={() => onToggle(todo.id)}
+        aria-label={todo.completed ? "완료 취소" : "완료 처리"}
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+        style={
+          todo.completed
+            ? { background: "var(--accent)", borderColor: "var(--accent)" }
+            : { borderColor: "var(--border)" }
+        }
+      >
+        {todo.completed && <CheckIcon className="h-3 w-3 text-white" />}
+      </button>
 
-        <div className="min-w-0 flex-1">
-          {editing ? (
-            <input
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={saveTitle}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-                if (e.key === "Escape") {
-                  setTitle(todo.title);
-                  setEditing(false);
-                }
-              }}
-              className="w-full rounded border border-blue-400 px-1 py-0.5 text-sm outline-none dark:bg-zinc-800"
-            />
-          ) : (
-            <p
-              onDoubleClick={() => setEditing(true)}
-              className={`truncate text-sm ${
-                todo.completed ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
-              }`}
-              title="더블클릭하여 수정"
+      <div className="min-w-0 flex-1">
+        {editing ? (
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setTitle(todo.title);
+                setEditing(false);
+              }
+            }}
+            className="w-full rounded border-b border-[var(--accent)] bg-transparent px-0.5 py-0.5 text-[15px] outline-none"
+          />
+        ) : (
+          <p
+            onDoubleClick={() => setEditing(true)}
+            className="truncate text-[15px] transition-colors"
+            style={
+              todo.completed
+                ? { color: "var(--muted)", textDecoration: "line-through" }
+                : { color: "var(--foreground)" }
+            }
+            title="더블클릭하여 수정"
+          >
+            {todo.title}
+          </p>
+        )}
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <span
+            className="rounded-full px-2 py-0.5 text-xs font-medium"
+            style={{ color: PRIORITY_COLOR[todo.priority], background: `${PRIORITY_COLOR[todo.priority]}1a` }}
+          >
+            {PRIORITY_LABEL[todo.priority]}
+          </span>
+          {todo.dueDate && (
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              style={
+                isOverdue
+                  ? { color: "#f43f5e", background: "#f43f5e1a" }
+                  : { color: "var(--muted)", background: "var(--border)" }
+              }
             >
-              {todo.title}
-            </p>
-          )}
-
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <span className={`rounded px-1.5 py-0.5 text-xs ${PRIORITY_STYLE[todo.priority]}`}>
-              {PRIORITY_LABEL[todo.priority]}
+              {formatDueDate(todo.dueDate)}
             </span>
-            {todo.dueDate && (
-              <span
-                className={`rounded px-1.5 py-0.5 text-xs ${
-                  isOverdue
-                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-300"
-                }`}
-              >
-                {formatDueDate(todo.dueDate)}
-              </span>
-            )}
-            {todo.category && (
-              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
-                {todo.category}
-              </span>
-            )}
-          </div>
-
-          {expanded && (
-            <div className="mt-3 flex flex-col gap-2 border-t border-black/10 pt-3 dark:border-white/10">
-              <textarea
-                defaultValue={todo.description ?? ""}
-                placeholder="설명 추가"
-                onBlur={(e) => onUpdate(todo.id, { description: e.target.value || null })}
-                className="w-full rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-800"
-                rows={2}
-              />
-              <div className="flex flex-wrap gap-2">
-                <select
-                  defaultValue={todo.priority}
-                  onChange={(e) => onUpdate(todo.id, { priority: e.target.value as Priority })}
-                  className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
-                >
-                  <option value="LOW">낮음</option>
-                  <option value="MEDIUM">보통</option>
-                  <option value="HIGH">높음</option>
-                </select>
-                <input
-                  type="date"
-                  defaultValue={todo.dueDate ?? ""}
-                  onChange={(e) => onUpdate(todo.id, { dueDate: e.target.value || null })}
-                  className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
-                />
-                <input
-                  type="text"
-                  defaultValue={todo.category ?? ""}
-                  placeholder="카테고리"
-                  onBlur={(e) => onUpdate(todo.id, { category: e.target.value || null })}
-                  className="rounded border border-black/10 px-2 py-1 text-xs dark:border-white/10 dark:bg-zinc-800"
-                />
-              </div>
-            </div>
+          )}
+          {todo.category && (
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ color: "var(--accent)", background: "var(--accent-soft)" }}
+            >
+              {todo.category}
+            </span>
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex gap-0.5">
-            <button
-              onClick={() => onMove(todo.id, "up")}
-              disabled={isFirst}
-              className="rounded px-1 text-zinc-400 hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
-              aria-label="위로 이동"
-            >
-              ↑
-            </button>
-            <button
-              onClick={() => onMove(todo.id, "down")}
-              disabled={isLast}
-              className="rounded px-1 text-zinc-400 hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
-              aria-label="아래로 이동"
-            >
-              ↓
-            </button>
+        {expanded && (
+          <div className="mt-3 flex flex-col gap-2 border-t pt-3" style={{ borderColor: "var(--border)" }}>
+            <textarea
+              defaultValue={todo.description ?? ""}
+              placeholder="설명 추가"
+              onBlur={(e) => onUpdate(todo.id, { description: e.target.value || null })}
+              className="w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-zinc-400"
+              style={{ borderColor: "var(--border)" }}
+              rows={2}
+            />
+            <div className="flex flex-wrap gap-2">
+              <select
+                defaultValue={todo.priority}
+                onChange={(e) => onUpdate(todo.id, { priority: e.target.value as Priority })}
+                className="rounded-lg border bg-transparent px-2 py-1 text-xs"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="LOW">낮음</option>
+                <option value="MEDIUM">보통</option>
+                <option value="HIGH">높음</option>
+              </select>
+              <input
+                type="date"
+                defaultValue={todo.dueDate ?? ""}
+                onChange={(e) => onUpdate(todo.id, { dueDate: e.target.value || null })}
+                className="rounded-lg border bg-transparent px-2 py-1 text-xs"
+                style={{ borderColor: "var(--border)" }}
+              />
+              <input
+                type="text"
+                defaultValue={todo.category ?? ""}
+                placeholder="카테고리"
+                onBlur={(e) => onUpdate(todo.id, { category: e.target.value || null })}
+                className="rounded-lg border bg-transparent px-2 py-1 text-xs placeholder:text-zinc-400"
+                style={{ borderColor: "var(--border)" }}
+              />
+            </div>
           </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-            >
-              {expanded ? "접기" : "편집"}
-            </button>
-            <button
-              onClick={() => {
-                if (confirm("이 할 일을 삭제할까요?")) onDelete(todo.id);
-              }}
-              className="text-xs text-red-400 hover:text-red-600"
-            >
-              삭제
-            </button>
-          </div>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end justify-between gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+        <div className="flex gap-0.5">
+          <button
+            onClick={() => onMove(todo.id, "up")}
+            disabled={isFirst}
+            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-black/5 disabled:opacity-0 dark:hover:bg-white/10"
+            aria-label="위로 이동"
+          >
+            <ChevronUpIcon className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => onMove(todo.id, "down")}
+            disabled={isLast}
+            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-black/5 disabled:opacity-0 dark:hover:bg-white/10"
+            aria-label="아래로 이동"
+          >
+            <ChevronDownIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex gap-0.5">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+            aria-label="편집"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm("이 할 일을 삭제할까요?")) onDelete(todo.id);
+            }}
+            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
+            aria-label="삭제"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </li>

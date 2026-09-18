@@ -113,9 +113,27 @@ export default function TodoApp() {
     return result;
   }, [todos, status, category, priority, sort]);
 
+  const doneCount = todos.filter((t) => t.completed).length;
+  const progress = todos.length ? Math.round((doneCount / todos.length) * 100) : 0;
+
   return (
-    <>
+    <div className="flex flex-col gap-5">
       <TodoInput onAdd={addTodo} />
+
+      {todos.length > 0 && (
+        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
+            <div
+              className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="shrink-0 tabular-nums">
+            {doneCount}/{todos.length} 완료
+          </span>
+        </div>
+      )}
+
       <FilterBar
         status={status}
         category={category}
@@ -134,6 +152,6 @@ export default function TodoApp() {
         onDelete={deleteTodo}
         onMove={moveTodo}
       />
-    </>
+    </div>
   );
 }

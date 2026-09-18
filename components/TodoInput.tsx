@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { Priority } from "@/lib/types";
+import { PlusIcon } from "@/components/icons";
 
 export default function TodoInput({
   onAdd,
@@ -37,36 +38,45 @@ export default function TodoInput({
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 rounded-lg border border-black/10 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-900"
+      className="rounded-2xl border p-3 shadow-sm transition-shadow focus-within:shadow-md"
+      style={{ borderColor: "var(--border)", background: "var(--background-elevated)" }}
     >
       <div className="flex gap-2">
         <input
           name="title"
           required
           placeholder="할 일을 입력하세요"
-          className="flex-1 rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-white/10 dark:bg-zinc-800"
+          className="flex-1 rounded-xl border-none bg-transparent px-2 py-2 text-[15px] outline-none placeholder:text-zinc-400"
         />
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="rounded-md border border-black/10 px-3 py-2 text-sm text-zinc-600 hover:bg-black/5 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/5"
+          className="shrink-0 rounded-xl px-3 py-2 text-sm text-zinc-500 transition-colors hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10"
         >
           {expanded ? "간단히" : "자세히"}
         </button>
         <button
           type="submit"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="flex shrink-0 items-center gap-1 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors"
+          style={{ background: "var(--accent)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
         >
+          <PlusIcon className="h-4 w-4" />
           추가
         </button>
       </div>
 
       {expanded && (
-        <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3">
+        <div
+          className="mt-3 grid grid-cols-1 gap-2 border-t pt-3 sm:grid-cols-3"
+          style={{ borderColor: "var(--border)" }}
+        >
           <select
             name="priority"
             defaultValue="MEDIUM"
-            className="rounded-md border border-black/10 px-2 py-1.5 text-sm dark:border-white/10 dark:bg-zinc-800"
+            className="rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
           >
             <option value="LOW">낮음</option>
             <option value="MEDIUM">보통</option>
@@ -75,13 +85,15 @@ export default function TodoInput({
           <input
             type="date"
             name="dueDate"
-            className="rounded-md border border-black/10 px-2 py-1.5 text-sm dark:border-white/10 dark:bg-zinc-800"
+            className="rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
           />
           <input
             type="text"
             name="category"
             placeholder="카테고리 (선택)"
-            className="rounded-md border border-black/10 px-2 py-1.5 text-sm dark:border-white/10 dark:bg-zinc-800"
+            className="rounded-lg border bg-transparent px-2 py-1.5 text-sm placeholder:text-zinc-400"
+            style={{ borderColor: "var(--border)" }}
           />
         </div>
       )}
